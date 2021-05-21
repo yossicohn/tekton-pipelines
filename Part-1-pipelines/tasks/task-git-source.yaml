@@ -1,0 +1,46 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: git-pull-source-and-get-sha
+spec:
+  results:
+    - name: push-image-url
+      description: container registry url to push 
+    - name: dockerfile-path
+      description: Dockerfile path
+    - name: path-to-context
+      description: the path to the docker context
+  workspaces:
+  - name: shared-data
+  resources:
+    inputs:
+      - name: docker-source
+        type: git
+        targetPath: shared-data
+    outputs:
+      - name: builtImage
+        type: image
+        targetPath: shared-data
+  steps:
+    - name: get-git-tag
+      image: bitnami/git
+# -------------------------------------------
+# this is an additional way to use command in a Task step vs. a script 
+      # command:
+        # - /bin/sh
+      # args: ['-c', 'pwd && ls -la && cd /workspace/shared-data && tag=$(git rev-parse --short=8 --verify HEAD) &&  echo -n "$(resources.outputs.builtImage.url):$tag" > $(results.push-image-url.path) && cat $(results.push-image-url.path) && echo -n "/workspace/shared-data/Dockerfile" > $(results.dockerfile-path.path) && cat $(results.dockerfile-path.path) &&  echo -n "/workspace/shared-data" > $(results.path-to-context.path) && cat $(results.path-to-context.path) '] 
+# -------------------------------------------
+      script: |
+        #!/usr/bin/env bash
+        set -xe
+        pwd
+        ls -la
+        cd /workspace/shared-data
+        tag=$(git rev-parse --short=8 --verify HEAD)
+        echo -n "$(resources.outputs.builtImage.url):$tag" > $(results.push-image-url.path)
+        cat $(results.push-image-url.path)
+        echo -n "/workspace/shared-data/Dockerfile" > $(results.dockerfile-path.path)
+        cat $(results.dockerfile-path.path)
+        echo -n "/workspace/shared-data" > $(results.path-to-context.path)
+        cat $(results.path-to-context.path) 
+      timeout: 5s    

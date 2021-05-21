@@ -1,0 +1,10 @@
+apiVersion: tekton.dev/v1alpha1
+kind: PipelineResource
+metadata:
+  name: go-api-skeleton-image
+spec:
+  type: image
+  params:
+    - name: url
+      value: yossicohn/tkn-pip-resource #configure: replace with where the image should go: perhaps your local registry or Dockerhub with a secret and configured service account
+
