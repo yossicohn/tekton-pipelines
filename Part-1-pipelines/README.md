@@ -1,4 +1,35 @@
-## Tekton Image Build Pipeline with Private Github Repo and Private ECR using Kaniko
+# Part 1 - Tekton Pipelines
+This repo is an example for Tekton Piplines, it intended to bridge the gap of the Tekton documentation and the Tekton newbie.
+
+The repo has 2 folders Part-1 and Part-2.
+
+Part-1 deals with the Tekton Pipelines.
+over ```Part-1-pipelines/simple-example``` it shows a very simple examnple.
+It would be better for newbie to start here.
+
+After you understand all the concepts you can continue to the Real example that is composed of all the resources here(discarding the simple-example)
+
+├── README.md
+├── configmap
+│   └── aws-ecr-docker-config.json
+├── pipeline
+│   ├── pipeline.yaml
+│   └── pipelinerun.yaml
+├── resources
+│   ├── git-resource.yaml
+│   └── image-resource.yaml
+├── secrets
+│   ├── aws-cred.yaml
+│   └── git-ssh-secret-file.yaml
+├── serviceaccounts
+│   └── serviceaccount.yaml
+└── tasks
+    ├── task-build-docker-image-from-git-source.yaml
+    └── task-git-source.yaml
+    
+    
+    
+# Tekton Getting started Image Build Pipeline with Private Github Repo
 
 This is an example of defining the proper resources for the Tekton Pipelines.
 
