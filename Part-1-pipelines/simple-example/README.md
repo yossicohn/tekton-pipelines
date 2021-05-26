@@ -1,4 +1,4 @@
-# Tekton Pipeline - Simple Example
+# Part 1 Tekton Pipeline - Simple Example
 
 This is an example of defining the proper resources for the Tekton Pipelines.
 In this example you will have a single task **add-task** used twice in the pipeline.
@@ -240,9 +240,9 @@ tkn t describe <taskname>
 
 tasks logs
 ```
-tkn task logs -f <pipline name>
+tkn task logs -f <task name>
 or
-tkn t logs -f <pipline name>
+tkn t logs -f <task name>
 ```
 
 
@@ -260,7 +260,6 @@ or
 tkn tr delete <taskrun name>
 ```
 
-
 Get the Pipeline
 ```
 tkn pipeline list
@@ -273,7 +272,10 @@ delete Pipeline
 tkn pipeline delete <Pipeline name>
 or
 tkn p delete <Pipeline name>  
+```
 
+
+Pipeline Logs
 ```
 tkn pipeline logs -f <pipline name>
 or
@@ -300,3 +302,4 @@ Enter the Dashboard via:
 kubectl proxy
 http://localhost:8001/api/v1/namespaces/tekton-pipelines/services/tekton-dashboard:http/proxy/
 ```
+å
