@@ -1,0 +1,29 @@
+apiVersion: triggers.tekton.dev/v1alpha1
+kind: TriggerTemplate
+metadata:
+  name: sum-three-pipeline-template
+  namespace: getting-started
+spec:
+  params:
+  - name: first
+    description: first.
+  - name: second
+    description: second.
+  - name: third
+    description: third.
+  resourcetemplates:
+    - apiVersion: tekton.dev/v1beta1
+      kind: PipelineRun
+      metadata:
+        generateName: sum-three-pipeline-run-
+        namespace: getting-started
+      spec:
+        pipelineRef:
+          name: sum-three-pipeline
+        params:
+        - name: first
+          value: "1"
+        - name: second
+          value: "2"
+        - name: third
+          value: "3"

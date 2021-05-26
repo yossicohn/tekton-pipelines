@@ -219,7 +219,6 @@ Namespace:   default
 ```
 
 
-
 ### Install Tekton dashboard
 
 [Install from here](https://github.com/tektoncd/dashboard/blob/main/docs/install.md)
@@ -234,11 +233,228 @@ kubectl proxy
 http://localhost:8001/api/v1/namespaces/tekton-pipelines/services/tekton-dashboard:http/proxy/
 ```
 
+# Part 2 Tekton Triggers - Simple Example
 
+The Tekton Triggers documentation is vast and you might get lost there.
+This example would be very simple, so just describe the concept and the main entities.
+
+There are 3 main entities in the Triigers flow:
+1. TriggerTemplate
+2. TriggerBinding
+3. EventListener
+
+These 3 Resources define the trigger, meaning:
+1.  what is executed by the trigger - this is defined by the **TriggerTemplate**, which defines a template for the Pipeline created when the trigger is activated.
+2.  What data is scraped from the Trigger Request call and how it is mapped to the Template, this is defined by the **TriggerBinding**
+3.  What is the event listener created to be called as the trigger endpoint, this is done by the **EventListener**
+   
+   
+   ---
+   ---
+
+Let's look on the **TriggerTemplate**
+```
+apiVersion: triggers.tekton.dev/v1alpha1
+kind: TriggerTemplate
+metadata:
+  name: sum-three-pipeline-template
+  namespace: getting-started
+spec:
+  params:
+  - name: first
+    description: first.
+  - name: second
+    description: second.
+  - name: third
+    description: third.
+  resourcetemplates:
+    - apiVersion: tekton.dev/v1beta1
+      kind: PipelineRun
+      metadata:
+        generateName: sum-three-pipeline-run-
+        namespace: getting-started
+      spec:
+        pipelineRef:
+          name: sum-three-pipeline
+        params:
+        - name: first
+          value: "1"
+        - name: second
+          value: "2"
+        - name: third
+          value: "3"
+```
+
+We can see that the spec defines 3 parameters (first, second, third) which will be used in the template.
+
+The  ```resourcetemplates``` tag defines the template of the resource to be created, which in this case is ```PipelineRun``` resource.
+The ```PipelineRun``` resource is referencing the existing pipeline resource.
+
+---
+**TriggerBinding**
+```
+apiVersion: triggers.tekton.dev/v1alpha1
+kind: TriggerBinding
+metadata:
+  name: sum-three-pipeline-binding
+spec:
+  params:
+  - name: first
+    value: "1"
+  - name: second
+    value: "2"
+  - name: third
+    value: "3"
+```
+
+This is a simple case of TriggerBinding, in a real triiger binding we would reference the request body and extract the data.
+In this case we have constant values (1, 2, 3)
+
+---
+**EventListener**
+
+```
+apiVersion: triggers.tekton.dev/v1alpha1
+kind: EventListener
+metadata:
+  name: getting-started-listener
+  namespace: getting-started
+spec:
+  serviceAccountName: tekton-triggers-example-sa
+  triggers:
+    - bindings:
+      - ref: sum-three-pipeline-binding
+      template:
+        ref: sum-three-pipeline-template
+```
+
+The EventrListener stich the TriggerBinding and the TriggerTemplate together as a trigger.
+
+Notice that the ```serviceAccount``` *tekton-triggers-example-sa* is used.
+This Service account get's man y credentials (defined in the rbac.yaml)
+
+
+## The credentials are needed for :
+### EventListeners need to be able to fetch all namespaced resources
+```
+- apiGroups: ["triggers.tekton.dev"]
+  resources: ["eventlisteners", "triggerbindings", "triggertemplates", "triggers"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: [""]
+# configmaps is needed for updating logging config
+  resources: ["configmaps"]
+  verbs: ["get", "list", "watch"]
+```
+### Permissions to create resources in associated TriggerTemplates
+
+```
+- apiGroups: ["tekton.dev"]
+  resources: ["pipelineruns", "pipelineresources", "taskruns"]
+  verbs: ["create"]
+- apiGroups: [""]
+  resources: ["serviceaccounts"]
+  verbs: ["impersonate"]
+- apiGroups: ["policy"]
+  resources: ["podsecuritypolicies"]
+  resourceNames: ["tekton-triggers"]
+  verbs: ["use"]
+```
+
+ ### EventListeners need to be able to fetch any clustertriggerbindings
+ ```
+- apiGroups: ["triggers.tekton.dev"]
+  resources: ["clustertriggerbindings", "clusterinterceptors"]
+  verbs: ["get", "list", "watch"]
+```
+
+After we install all the new trigger resources, we can continue for exposing the trigger to the world.
+
+```
+kubectl apply -f Part-2-triggers/simple-example/rbac.yaml
+kubectl apply -f Part-2-triggers/simple-example/trigger-template.yaml
+kubectl apply -f Part-2-triggers/simple-example/triggerbinding.yaml
+kubectl apply -f Part-2-triggers/simple-example/eventlistener.yaml
+```
+We now would see 2 new ClusterIP services:
+```
+tekton-pipelines git:(main) ✗ kubectl get svc -n getting-started
+NAME                          TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)    AGE
+el-getting-started-listener   ClusterIP   172.20.153.238   <none>        8080/TCP   26h
+event-display                 ClusterIP   172.20.141.11    <none>        8080/TCP   29h
+```
+
+and new pods
+```
+ tekton-pipelines git:(main) ✗ kubectl get pods -n getting-started
+NAME                                                      READY   STATUS      RESTARTS   AGE
+el-getting-started-listener-64586f7fcf-8v27q              1/1     Running     5          26h
+event-display                                             1/1     Running     0          29h
+```
+
+Now we need to expose that to the world.
+This can be done by NginxIngress or Kong or other Gateway.
+
+I will use Kong, install via helm 
+
+```
+helm repo add kong https://charts.konghq.com
+helm repo update
+```
+
+Create a namespace
+```
+kubectl create ns kong
+```
+
+Install helm chart
+```
+helm install kong kong/kong  --set ingressController.installCRDs=false  -nkong
+```
+
+Now, let;s define ingress resource
+
+```
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: el-getting-started-listener-ingress
+  annotations:
+    kubernetes.io/ingress.class: kong
+
+spec:
+  rules:
+  - host: trigger-example.com
+    http:
+      paths:
+      - path: /*
+        backend:
+          serviceName: el-getting-started-listener
+          servicePort: 8080
+```
+
+So, assuming I have a dns ```trigger-example.com```.
+Any call from that dns now would be routed to the service ```el-getting-started-listener```
+
+
+
+Now a simple curl should activate our trigger:
+```
+curl -i  -H 'Content-Type: application/json'  -d '{"nothing":"nothing"}'  http://trigger-example.com
+```
+
+
+```
+tkn pr ls
+
+ tekton-pipelines git:(main) ✗ tkn pr ls
+NAME                           STARTED          DURATION     STATUS
+sum-three-pipeline-run-kk8gv   1 minute ago     8 seconds    Succeeded
+```
 
 ---
 ---
-#### Using the TKN CLI
+
+# Using the TKN CLI
 get the tasks
 ```
 tkn tasks list
@@ -307,3 +523,4 @@ describe pipline
 tkn pipline describe <pipline>
 tkn p describe <pipline> 
 ```
+

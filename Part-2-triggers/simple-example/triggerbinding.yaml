@@ -1,0 +1,12 @@
+apiVersion: triggers.tekton.dev/v1alpha1
+kind: TriggerBinding
+metadata:
+  name: sum-three-pipeline-binding
+spec:
+  params:
+  - name: first
+    value: "1"
+  - name: second
+    value: "2"
+  - name: third
+    value: "3"

@@ -1,0 +1,12 @@
+apiVersion: triggers.tekton.dev/v1alpha1
+kind: EventListener
+metadata:
+  name: getting-started-listener
+  namespace: getting-started
+spec:
+  serviceAccountName: tekton-triggers-example-sa
+  triggers:
+    - bindings:
+      - ref: sum-three-pipeline-binding
+      template:
+        ref: sum-three-pipeline-template
