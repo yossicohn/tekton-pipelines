@@ -316,13 +316,13 @@ Then mount the volume to path :
 
 
 
-### Kaniko Additional Features
-
-Additional Kaniko Features
-Cache
-Cache registry
-
-We could use git-clone from the catalog instead
+Note, regarding the tasks.
+We could use git-clone from the catalog instead of ```PipelineResource```.
+There are several ways to do the same thing.
+In this case I used the ```PipelineResource``` and also used an additional task to define the resulted Image tag.
+In this case getting the SHA1 of the last git commit.
+We could also define a different strategy and this task could be the place for it.
+More over we example a result usage in the pipeline.
 
 
 ## Tekton
