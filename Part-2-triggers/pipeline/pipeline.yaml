@@ -1,0 +1,62 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: pipeline-build-push-image
+spec:
+  resources:
+    - name: input-git
+      type: git
+    - name: output-image
+      type: image
+  results:
+    - name: dockerfile-path
+      description: the Dockerfile path
+      value: "$(tasks.pipeline-git-source.results.dockerfile-path)"
+    - name: image-url
+      description: the image url
+      value: "$(tasks.pipeline-git-source.results.push-image-url)"
+    - name: path-to-context
+      description: the Dockerfile Context path
+      value: "$(tasks.pipeline-git-source.results.path-to-context)"
+  params:
+    - name: dockerfile-path
+    - name: path-to-context
+    - name: image-url
+  workspaces:
+    - name: shared-data
+  tasks:
+    - name: pipeline-git-source
+      taskRef:
+        name: git-pull-source-and-get-sha
+      workspaces:
+        - name: shared-data
+          workspace: shared-data
+      resources:
+        inputs:
+          - name: docker-source
+            resource: input-git
+        outputs:
+          - name: builtImage
+            resource: output-image
+    - name: build-container-image-and-push
+      taskRef:
+        name: build-docker-image-from-source
+      runAfter: 
+        - pipeline-git-source
+      params:
+        - name: dockerfile-path
+          value: "$(tasks.pipeline-git-source.results.dockerfile-path)"
+        - name: image-url
+          value: "$(tasks.pipeline-git-source.results.push-image-url)"
+        - name: path-to-context
+          value: "$(tasks.pipeline-git-source.results.path-to-context)"
+      workspaces:
+        - name: shared-data
+          workspace: shared-data
+      resources:
+        outputs:
+          - name: builtImage
+            resource: output-image
+      
+     
+  

@@ -1,0 +1,32 @@
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  name: pipelinerun-build-push-image
+spec:
+  resources:
+    - name: input-git
+      resourceRef:
+        name: go-api-skeleton-git
+    - name: output-image
+      resourceRef:
+        name: go-api-skeleton-image
+  workspaces:
+  - name: shared-data
+    volumeClaimTemplate:
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
+  serviceAccountName: git-serviceaccount
+  pipelineRef:
+    name: pipeline-build-push-image
+  params:
+    - name: dockerfile-path
+      value: "./Dockerfile"
+    - name: image-url
+      value: "yossicohn/app"
+    - name: path-to-context
+      value: "workspace/shared-data"
+  

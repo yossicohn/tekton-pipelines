@@ -1,0 +1,91 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: build-docker-image-from-source
+spec:
+
+  volumes:
+    - name: kaniko-secret
+      secret:
+        secretName: regcred
+        items:
+        - key: .dockerconfigjson
+          path: config.json
+    # - name: aws-creds
+    #   secret:
+    #     secretName: aws-creds
+    # - name: docker-configmap
+    #   configMap:
+    #     name: docker-config
+  
+  workspaces:
+  - name: shared-data
+  params:
+    - name: dockerfile-path
+      type: string
+      default: "/workspace/shared-data/Dockerfile"
+    - name: path-to-context
+      type: string
+      default: /workspace/shared-data
+    - name: image-url
+      type: string
+      default: ""
+  resources:
+    # inputs:
+    #   - name: docker-source
+    #     type: git
+    #     targetPath: shared-data
+    outputs:
+      - name: builtImage
+        type: image
+        targetPath: shared-data
+  steps:
+
+    - name: build-and-push
+      image: gcr.io/kaniko-project/executor:debug
+
+      # --------------------------------------------------------------
+      # you can use one of these images to debug the current status.
+      # amazon/aws-cli image can help debug aws credentials, alpine for other issues
+      # image: alpine
+      # image: amazon/aws-cli
+      # command:
+      #   - /bin/sh
+      # args: ['-c', 'sleep 1h']  
+      # --------------------------------------------------------------
+
+      # specifying DOCKER_CONFIG is required to allow kaniko to detect docker credential
+      env:
+        - name: "DOCKER_CONFIG"
+          value: "/kaniko/.docker/"     
+      command:
+        - /kaniko/executor
+      args:
+        - --dockerfile=$(params.dockerfile-path)
+        - --destination=$(params.image-url)
+        # - --context=/workspace/shared-data
+        - --context=$(params.path-to-context)
+        # - --cache=true
+        # - --cache-repo=$(resources.outputs.builtImage.url)
+        # - --cleanup
+        # - --cache-copy-layers
+        - --verbosity=debug
+      
+      volumeMounts:
+        # - name:  aws-creds
+        #   mountPath:  /tekton/home/.aws
+      # ---------------------------------
+      # you can use this secret when using AWS Container Registry (ECR)
+      # Note, that the aws credentials along the docker-configmap would set the ECR credentials
+        # - name:  aws-creds
+        #   mountPath:  /root/.aws
+        # - name: docker-configmap
+        #   mountPath: /kaniko/.docker/
+
+      # ---------------------------------
+      # you can use this secret when using a different (e.g. DockerHub) Container Registry
+        - name: kaniko-secret
+          mountPath: /kaniko/.docker/
+      # --------------------------------
+          
+
