@@ -310,6 +310,21 @@ spec:
 This is a simple case of TriggerBinding, in a real triiger binding we would reference the request body and extract the data.
 In this case we have constant values (1, 2, 3)
 
+a real example for exatrction of data from the request would look like this:
+```
+apiVersion: triggers.tekton.dev/v1alpha1
+kind: TriggerBinding
+metadata:
+  name: pipeline-binding
+spec:
+  params:
+  - name: gitrevision
+    value: $(body.head_commit.id)
+  - name: gitrepositoryurl
+    value: $(body.repository.url)
+  - name: contenttype
+    value: $(header.Content-Type)
+```
 ---
 **EventListener**
 
@@ -522,5 +537,32 @@ describe pipline
 ```
 tkn pipline describe <pipline>
 tkn p describe <pipline> 
+```
+
+
+
+# Security for Web hook
+
+
+## Create the Secret:
+```
+k create secret generic github-secret --from-literal=secretToken=<token> --dry-run=client -oyaml
+```
+
+which will give:
+```
+apiVersion: v1
+data:
+  secretToken: <base64 token>
+kind: Secret
+metadata:
+  creationTimestamp: null
+  name: github-secret
+```
+
+Now we need to patch oue ServiceAccount with the change:
+
+```
+kubectl patch serviceaccount tekton-triggers-example-sa  -p '{"secrets": [{"name": "github-secret"}]}'
 ```
 
