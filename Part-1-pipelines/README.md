@@ -142,7 +142,7 @@ spec:
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: tutorial-service
+  name: git-serviceaccount
 secrets:
   - name: ssh-key-secret
 
