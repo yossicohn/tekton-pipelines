@@ -1,0 +1,12 @@
+apiVersion: triggers.tekton.dev/v1alpha1
+kind: TriggerBinding
+metadata:
+  name: build-push-image-pipeline-binding
+spec:
+  params:
+    - name: dockerfile-path
+      value: "./Dockerfile"
+    - name: image-url
+      value: "yossicohn/app"
+    - name: path-to-context
+      value: "workspace/shared-data"

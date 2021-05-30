@@ -1,0 +1,21 @@
+      
+apiVersion: triggers.tekton.dev/v1alpha1
+kind: EventListener
+metadata:
+  name: build-push-image-tekton-trigger-listener
+spec:
+  serviceAccountName: service-tekton-triggers-sa
+  triggers:
+    - name: github-listener
+      interceptors:
+        - github:
+            secretRef:
+              secretName: github-secret
+              secretKey: secretToken
+            eventTypes:
+              - pull_request
+              - push
+      bindings:
+        - ref: build-push-image-pipeline-binding
+      template:
+        ref: build-push-image-template

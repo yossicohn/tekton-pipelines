@@ -1,0 +1,16 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: el-build-push-image-listener-ingress
+  annotations:
+    kubernetes.io/ingress.class: kong
+
+spec:
+  rules:
+  - host: trigger-example.com
+    http:
+      paths:
+      - path: /*
+        backend:
+          serviceName: el-build-push-image-tekton-trigger-listener
+          servicePort: 8080
