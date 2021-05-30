@@ -22,10 +22,18 @@ After you understand all the concepts you can continue to the Real example that 
 ├── secrets
 │   ├── aws-cred.yaml
 │   └── git-ssh-secret-file.yaml
-│   └── triggerbinding.yaml
-└── tasks
-    ├── task-build-docker-image-from-git-source.yaml
-    └── task-git-source.yaml
+├── serviceaccounts
+│   └── serviceaccount.yaml
+├── tasks
+│   ├── task-build-docker-image-from-git-source.yaml
+│   └── task-git-source.yaml
+└── trigger
+    ├── eventlistener.yaml
+    ├── github-secret.yaml
+    ├── ingress.yaml
+    ├── rbac.yaml
+    ├── trigger-template.yaml
+    └── triggerbinding.yaml
 ```    
     
     
