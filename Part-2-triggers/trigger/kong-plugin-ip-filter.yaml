@@ -1,0 +1,9 @@
+apiVersion: configuration.konghq.com/v1
+kind: KongPlugin
+metadata:
+  name: github-hook
+config: 
+  allow:
+  - 140.82.112.0/20
+  - 192.30.252.0/22
+plugin: ip-restriction

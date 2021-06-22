@@ -1,0 +1,20 @@
+env:
+  nginx_proxy_proxy_buffer_size: 256k
+  nginx_proxy_proxy_buffers: 64 256k
+  trusted_ips: 0.0.0.0/0,::0
+  real_ip_recursive: "on"
+  real_ip_header: X-Forwarded-For
+  headers: 'off'
+
+ingressController:
+  installCRDs: false
+
+proxy:
+  type: LoadBalancer
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-proxy-protocol: '*'
+    service.beta.kubernetes.io/aws-load-balancer-backend-protocol: 'http'
+    service.beta.kubernetes.io/aws-load-balancer-type: “alb”
+
+
+

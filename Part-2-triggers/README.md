@@ -333,6 +333,77 @@ We could also define a different strategy and this task could be the place for i
 More over we example a result usage in the pipeline.
 
 
+## Tekton Triggers - Part 2
+
+Inorder to create the Tekton Triggers we need to create the foillowing Resources:
+
+**EventListener** - listens for events at a specified port on your Kubernetes cluster. Specifies one or more Triggers
+
+**TriggerTemplate** - specifies a blueprint for the resource, such as a TaskRun or PipelineRun
+
+**TriggerBinding** - specifies the fields in the event payload from which you want to extract data and the fields in your corresponding TriggerTemplate
+
+**ClusterTriggerBinding** - a cluster-scoped version of the TriggerBinding, useful for reuse within your cluster
+
+**Interceptor** - a "catch-all" event processor for a specific platform that runs before the TriggerBinding enabling you to perform payload filtering, verification (using a secret), transformation, define and test trigger conditions, and other useful processing
+
+**So stitching all this together**:
+A Trigger specifies what happens when the EventListener detects an event.
+
+A Trigger specifies a *TriggerTemplate*, a *TriggerBinding*, and optionally an *Interceptor*
+
+All these resources are defined under the trigger folder in the Part -2 section.
+
+### Creation of Tekton Resources
+Inorder for the Tekton Trigger flow to work, specific credentials are needed.
+For example :
+- listening to Events
+- Creation of Tekton Resources
+
+This is fullfilled via the RBAC rules we create.
+Note, that theServiceAccount service-tekton-triggers-sa is given all these credentials and that is being used by the EventListener Resource.
+
+Running 
+Let's apply all the new resources in the following manner:
+
+```
+kubectl apply -f triggers/triggerbinding.yaml
+kubectl apply -f triggers/trigger-template.yaml
+kubectl apply -f triggers/rbac.yaml
+kubectl apply -f triggers/github-secret.yaml
+kubectl apply -f triggers/eventlistener.yaml
+```
+
+we should have a new service:
+```
+➜  tekton-pipelines git:(main) ✗ kubectl get svc
+NAME                                          TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)    AGE
+el-build-push-image-tekton-trigger-listener   ClusterIP   172.20.128.184   <none>        8080/TCP   23d
+kubernetes                                    ClusterIP   172.20.0.1       <none>        443/TCP    28d
+```
+
+## Exposing The Trigger Endpoint
+
+The expose the service to the GitHub, you should use IngressController.
+I'm using Kong for that.
+The ingress would be exposed via the following Ingress Resource.
+
+## Testing
+We can, trigger our Repo via simple git push and see how the PipelineRun is created.
+As an advise you could as for starter:
+- remove the github interceptor
+- Use port-forwarding of the Service and call it easlt from your machine
+
+## Security Aspect
+As for the Security aspect.
+You should note that exposing public endpoints into your cluster is asking for problems.
+Two major things you can do as for Github Hooks:
+1. IP Whitelisting 
+you can whitelist Github IP's (Kong IP Restriction plugging can help with that)
+You can find the Github whitelist Here.
+2. Github SecretToken
+you should use the Github SecretToken the same way I used with Interceptors.
+
 ## Tekton
 
 ### Install Tekton resources
