@@ -4,6 +4,7 @@ metadata:
   name: el-build-push-image-listener-ingress
   annotations:
     kubernetes.io/ingress.class: kong
+    konghq.com/plugins: github-hook
 
 spec:
   rules:
